@@ -1,0 +1,69 @@
+import 'package:flutter/material.dart';
+import 'package:ssrapp/domain/parsers/dynamic_widget_builder.dart';
+import 'package:ssrapp/domain/parsers/utils_parser.dart';
+import 'package:ssrapp/domain/parsers/widget_parser.dart';
+class ContainerWidgetParser extends WidgetParser {
+  @override
+  Widget parse(Map<String, dynamic> map, BuildContext buildContext) {
+    Alignment? alignment = parseAlignment(map['alignment']);
+    Color? color = parseHexColor(map['color']);
+    BoxDecoration? decoration = parseBoxDecoration(map['decoration']);
+    BoxConstraints constraints = parseBoxConstraints(map['constraints']);
+    //TODO: decoration, foregroundDecoration and transform properties to be implemented.
+    EdgeInsetsGeometry? margin = parseEdgeInsetsGeometry(map['margin']);
+    EdgeInsetsGeometry? padding = parseEdgeInsetsGeometry(map['padding']);
+    Map<String, dynamic>? childMap = map['child'];
+    Widget? child = childMap == null
+        ? null
+        : DynamicWidgetBuilder.buildFromMap(childMap, buildContext);
+
+    String? clickEvent =
+        map.containsKey("click_event") ? map['click_event'] : null;
+
+    var containerWidget = Container(
+      alignment: alignment,
+      padding: padding,
+      color: color,
+      margin: margin,
+      width: map['width']?.toDouble(),
+      height: map['height']?.toDouble(),
+      constraints: constraints,
+      decoration: decoration,
+      child: child,
+    );
+
+    return containerWidget;
+  }
+
+  @override
+  String get widgetName => "Container";
+
+  @override
+  Map<String, dynamic> export(Widget? widget, BuildContext? buildContext) {
+    var realWidget = widget as Container;
+    var padding = realWidget.padding as EdgeInsets?;
+    var margin = realWidget.margin as EdgeInsets?;
+    var constraints = realWidget.constraints;
+    return <String, dynamic>{
+      "type": widgetName,
+      "alignment": realWidget.alignment != null
+          ? exportAlignment(realWidget.alignment as Alignment?)
+          : null,
+      "padding": padding != null
+          ? "${padding.left},${padding.top},${padding.right},${padding.bottom}"
+          : null,
+      "color": realWidget.color != null
+          ? realWidget.color!.value.toRadixString(16)
+          : null,
+      "margin": margin != null
+          ? "${margin.left},${margin.top},${margin.right},${margin.bottom}"
+          : null,
+      "constraints":
+          constraints != null ? exportConstraints(constraints) : null,
+      "child": DynamicWidgetBuilder.export(realWidget.child, buildContext)
+    };
+  }
+
+  @override
+  Type get widgetType => Container;
+}
